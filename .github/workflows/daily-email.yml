@@ -1,0 +1,35 @@
+name: Daily Email
+
+on:
+  schedule:
+    # Ruleaza in fiecare zi la 07:00 UTC (= 09:00/10:00 ora Romaniei, in functie de ora de vara)
+    - cron: "0 7 * * *"
+  workflow_dispatch: {}   # permite si rulare manuala din tab-ul "Actions"
+
+jobs:
+  send-email:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Read content
+        id: content
+        run: |
+          {
+            echo 'body<<EOF'
+            cat message.md
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Send email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "Mesajul zilei - ${{ github.run_id }}"
+          to: ${{ secrets.MAIL_TO }}
+          from: ${{ secrets.MAIL_USERNAME }}
+          body: ${{ steps.content.outputs.body }}
